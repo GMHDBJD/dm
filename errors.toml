@@ -1435,7 +1435,7 @@ tags = ["internal", "high"]
 [error.DM-sync-unit-36008]
 message = "detect inconsistent DDL sequence from source %+v, right DDL sequence should be %+v"
 description = ""
-workaround = ""
+workaround = "please skip it."
 tags = ["internal", "high"]
 
 [error.DM-sync-unit-36009]
@@ -1759,7 +1759,7 @@ tags = ["internal", "high"]
 [error.DM-sync-unit-36062]
 message = "fail to handle shard ddl %v in optimistic mode, because schema conflict detected"
 description = ""
-workaround = ""
+workaround = "please skip it"
 tags = ["internal", "high"]
 
 [error.DM-sync-unit-36063]
