@@ -13,6 +13,7 @@ function DM_001_CASE() {
     run_dm_ctl_with_retry $WORK_DIR "127.0.0.1:$MASTER_PORT" \
         "query-status test" \
         "Duplicate column name 'new_col1'" 1
+    read v1
 }
 
 function DM_001() {

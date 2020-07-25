@@ -33,6 +33,8 @@ service Worker {
     // a `set`/`remove` operation should be an one-time operation (only take effect once),
     // so we use a gRPC method rather than a etcd operation now (no persistent operation state).
     rpc OperateSchema(OperateWorkerSchemaRequest) returns(CommonWorkerResponse) {}
+
+    rpc HandleError(HandleWorkerErrorRequest) returns(CommonWorkerResponse) {}
 }
 
 message StartSubTaskRequest {
@@ -419,3 +421,17 @@ message OperateWorkerSchemaRequest {
     string table = 5; // table name
     string schema = 6; // schema content, a `CREATE TABLE` statement
 }
+
+enum HandleOp {
+    SkipError = 0; // skip the error event
+    ReplaceError = 1; // replace the error event with a specified SQL
+    InvalidHandleOp = 2;
+}
+
+message HandleWorkerErrorRequest {
+    HandleOp op = 1; // operation type
+    string task = 2; // task name
+    string source = 3; // source ID
+    string binlogPos = 4; // binlog-pos (that's file:pos format)
+    repeated string sqls = 5; // sqls (use for replace)
+} 

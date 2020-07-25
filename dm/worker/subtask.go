@@ -536,6 +536,16 @@ func (st *SubTask) OperateSchema(ctx context.Context, req *pb.OperateWorkerSchem
 	return syncUnit.OperateSchema(ctx, req)
 }
 
+// HandleError handle error for syncer unit
+func (st *SubTask) HandleError(ctx context.Context, req *pb.HandleWorkerErrorRequest) (err error) {
+	syncUnit, ok := st.currUnit.(*syncer.Syncer)
+	if !ok {
+		return terror.ErrWorkerOperSyncUnitOnly.Generate(st.currUnit.Type())
+	}
+
+	return syncUnit.HandleError(ctx, req)
+}
+
 // UpdateFromConfig updates config for `From`
 func (st *SubTask) UpdateFromConfig(cfg *config.SubTaskConfig) error {
 	st.Lock()

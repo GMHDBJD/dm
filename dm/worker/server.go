@@ -736,6 +736,30 @@ func (s *Server) OperateSchema(ctx context.Context, req *pb.OperateWorkerSchemaR
 	}, nil
 }
 
+// HandleError handle error
+func (s *Server) HandleError(ctx context.Context, req *pb.HandleWorkerErrorRequest) (*pb.CommonWorkerResponse, error) {
+	log.L().Info("", zap.String("request", "HandleError"), zap.Stringer("payload", req))
+
+	w := s.getWorker(true)
+	if w == nil {
+		log.L().Error("fail to call HandleError, because mysql worker has not been started")
+		return makeCommonWorkerResponse(terror.ErrWorkerNoStart.Generate()), nil
+	} else if req.Source != w.cfg.SourceID {
+		log.L().Error("fail to call HandleError, because source mismatch")
+		return makeCommonWorkerResponse(terror.ErrWorkerSourceNotMatch.Generate()), nil
+	}
+
+	err := w.HandleError(ctx, req)
+	if err != nil {
+		return makeCommonWorkerResponse(err), nil
+	}
+	return &pb.CommonWorkerResponse{
+		Result: true,
+		Source: req.Source,
+		Worker: s.cfg.Name,
+	}, nil
+}
+
 func (s *Server) startWorker(cfg *config.SourceConfig) error {
 	s.Lock()
 	defer s.Unlock()
