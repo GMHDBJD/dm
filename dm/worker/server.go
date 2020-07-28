@@ -744,18 +744,15 @@ func (s *Server) HandleError(ctx context.Context, req *pb.HandleWorkerErrorReque
 	if w == nil {
 		log.L().Error("fail to call HandleError, because mysql worker has not been started")
 		return makeCommonWorkerResponse(terror.ErrWorkerNoStart.Generate()), nil
-	} else if req.Source != w.cfg.SourceID {
-		log.L().Error("fail to call HandleError, because source mismatch")
-		return makeCommonWorkerResponse(terror.ErrWorkerSourceNotMatch.Generate()), nil
 	}
 
-	err := w.HandleError(ctx, req)
+	msg, err := w.HandleError(ctx, req)
 	if err != nil {
 		return makeCommonWorkerResponse(err), nil
 	}
 	return &pb.CommonWorkerResponse{
 		Result: true,
-		Source: req.Source,
+		Msg:    msg,
 		Worker: s.cfg.Name,
 	}, nil
 }

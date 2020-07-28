@@ -57,6 +57,7 @@ import (
 	"github.com/pingcap/dm/pkg/terror"
 	"github.com/pingcap/dm/pkg/tracing"
 	"github.com/pingcap/dm/pkg/utils"
+	handle "github.com/pingcap/dm/syncer/err-handler"
 	sm "github.com/pingcap/dm/syncer/safe-mode"
 	"github.com/pingcap/dm/syncer/shardddl"
 	operator "github.com/pingcap/dm/syncer/sql-operator"
@@ -166,6 +167,7 @@ type Syncer struct {
 	}
 
 	sqlOperatorHolder *operator.Holder
+	errHandlerHolder  *handle.HandlerHolder
 
 	heartbeat *Heartbeat
 
@@ -177,6 +179,11 @@ type Syncer struct {
 	currentLocationMu struct {
 		sync.RWMutex
 		currentLocation binlog.Location // use to calc remain binlog size
+	}
+
+	errLocation struct {
+		sync.RWMutex
+		location *binlog.Location // use to calc remain binlog size
 	}
 
 	addJobFunc func(*job) error
@@ -211,6 +218,7 @@ func NewSyncer(cfg *config.SubTaskConfig, etcdClient *clientv3.Client) *Syncer {
 
 	syncer.binlogType = toBinlogType(cfg.UseRelay)
 	syncer.sqlOperatorHolder = operator.NewHolder()
+	syncer.errHandlerHolder = handle.NewHandlerHolder()
 	syncer.readerHub = streamer.GetReaderHub()
 
 	if cfg.ShardMode == config.ShardPessimistic {
@@ -431,6 +439,7 @@ func (s *Syncer) reset() {
 	s.newJobChans(s.cfg.WorkerCount + 1)
 
 	s.execError.Set(nil)
+	s.setErrLocation(nil)
 	s.resetExecErrors()
 
 	switch s.cfg.ShardMode {
@@ -946,6 +955,7 @@ func (s *Syncer) syncDDL(tctx *tcontext.Context, queueBucket string, db *DBConn,
 		if err != nil {
 			s.execError.Set(err)
 			if !utils.IsContextCanceledError(err) {
+				err = s.handleEventError(err, &sqlJob.currentLocation)
 				s.runFatalChan <- unit.NewProcessError(err)
 			}
 			continue
@@ -975,17 +985,18 @@ func (s *Syncer) sync(tctx *tcontext.Context, queueBucket string, db *DBConn, jo
 		}
 	}
 
-	fatalF := func(err error) {
+	fatalF := func(err error, affected int) {
 		s.execError.Set(err)
 		if !utils.IsContextCanceledError(err) {
+			err = s.handleEventError(err, &jobs[affected].currentLocation)
 			s.runFatalChan <- unit.NewProcessError(err)
 		}
 		clearF()
 	}
 
-	executeSQLs := func() error {
+	executeSQLs := func() (error, int) {
 		if len(jobs) == 0 {
-			return nil
+			return nil, 0
 		}
 		queries := make([]string, 0, len(jobs))
 		args := make([][]interface{}, 0, len(jobs))
@@ -1002,10 +1013,11 @@ func (s *Syncer) sync(tctx *tcontext.Context, queueBucket string, db *DBConn, jo
 			errCtx := &ExecErrorContext{err, jobs[affected].currentLocation.Clone(), fmt.Sprintf("%v", jobs)}
 			s.appendExecErrors(errCtx)
 		}
-		return err
+		return err, affected
 	}
 
 	var err error
+	var affected int
 	for {
 		select {
 		case sqlJob, ok := <-jobChan:
@@ -1021,9 +1033,9 @@ func (s *Syncer) sync(tctx *tcontext.Context, queueBucket string, db *DBConn, jo
 			}
 
 			if idx >= count || sqlJob.tp == flush {
-				err = executeSQLs()
+				err, affected = executeSQLs()
 				if err != nil {
-					fatalF(err)
+					fatalF(err, affected)
 					continue
 				}
 				clearF()
@@ -1031,9 +1043,9 @@ func (s *Syncer) sync(tctx *tcontext.Context, queueBucket string, db *DBConn, jo
 
 		case <-time.After(waitTime):
 			if len(jobs) > 0 {
-				err = executeSQLs()
+				err, affected = executeSQLs()
 				if err != nil {
-					fatalF(err)
+					fatalF(err, affected)
 					continue
 				}
 				clearF()
@@ -1241,7 +1253,7 @@ func (s *Syncer) Run(ctx context.Context) (err error) {
 
 		startTime := time.Now()
 		if e == nil {
-			e, err = s.streamerController.GetEvent(tctx)
+			e, err = s.getEvent(tctx, &currentLocation)
 		}
 
 		if err == context.Canceled {
@@ -1328,19 +1340,18 @@ func (s *Syncer) Run(ctx context.Context) (err error) {
 		switch ev := e.Event.(type) {
 		case *replication.RotateEvent:
 			err = s.handleRotateEvent(ev, ec)
-			if err != nil {
-				return terror.Annotatef(err, "current location %s", currentLocation)
-			}
 		case *replication.RowsEvent:
+			currentLocation.Position.Pos = ec.header.LogPos
+			if skip := s.errHandlerHolder.Handle(tctx, &currentLocation); skip {
+				continue
+			}
 			err = s.handleRowsEvent(ev, ec)
-			if err != nil {
-				return terror.Annotatef(err, "current location %s", currentLocation)
-			}
 		case *replication.QueryEvent:
-			err = s.handleQueryEvent(ev, ec)
-			if err != nil {
-				return terror.Annotatef(err, "current location %s", currentLocation)
+			currentLocation.Position.Pos = ec.header.LogPos
+			if skip := s.errHandlerHolder.Handle(tctx, &currentLocation); skip {
+				continue
 			}
+			err = s.handleQueryEvent(ev, ec)
 		case *replication.XIDEvent:
 			if shardingReSync != nil {
 				shardingReSync.currLocation.Position.Pos = e.Header.LogPos
@@ -1367,9 +1378,6 @@ func (s *Syncer) Run(ctx context.Context) (err error) {
 
 			job := newXIDJob(currentLocation, currentLocation, traceID)
 			err = s.addJobFunc(job)
-			if err != nil {
-				return terror.Annotatef(err, "current location %s", currentLocation)
-			}
 		case *replication.GenericEvent:
 			switch e.Header.EventType {
 			case replication.HEARTBEAT_EVENT:
@@ -1377,11 +1385,11 @@ func (s *Syncer) Run(ctx context.Context) (err error) {
 				if s.checkpoint.CheckGlobalPoint() {
 					s.tctx.L().Info("meet heartbeat event and then flush jobs")
 					err = s.flushJobs()
-					if err != nil {
-						return err
-					}
 				}
 			}
+		}
+		if err = s.handleEventError(err, &currentLocation); err != nil {
+			return err
 		}
 	}
 }
@@ -2624,4 +2632,42 @@ func (s *Syncer) ShardDDLInfo() *pessimism.Info {
 // ShardDDLOperation returns the current pending to handle shard DDL lock operation.
 func (s *Syncer) ShardDDLOperation() *pessimism.Operation {
 	return s.pessimist.PendingOperation()
+}
+
+func (s *Syncer) setErrLocation(location *binlog.Location) {
+	s.errLocation.Lock()
+	defer s.errLocation.Unlock()
+
+	if s.errLocation.location == nil || location == nil {
+		s.errLocation.location = location
+		return
+	}
+
+	if binlog.CompareLocation(*location, *s.errLocation.location, s.cfg.EnableGTID) < 0 {
+		s.errLocation.location = location
+	}
+}
+
+func (s *Syncer) getErrLocation() *binlog.Location {
+	s.errLocation.Lock()
+	defer s.errLocation.Unlock()
+	return s.errLocation.location
+}
+
+func (s *Syncer) handleEventError(err error, location *binlog.Location) error {
+	if err == nil {
+		return nil
+	}
+
+	s.setErrLocation(location)
+	return terror.Annotatef(err, "error location %s", location)
+}
+
+func (s *Syncer) getEvent(tctx *tcontext.Context, location *binlog.Location) (*replication.BinlogEvent, error) {
+	log.L().Info("in get event")
+	if location.Suffix == 0 {
+		return s.streamerController.GetEvent(tctx)
+	}
+	e, err := s.errHandlerHolder.GetEvent(location)
+	return e, err
 }

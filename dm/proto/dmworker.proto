@@ -431,7 +431,6 @@ enum HandleOp {
 message HandleWorkerErrorRequest {
     HandleOp op = 1; // operation type
     string task = 2; // task name
-    string source = 3; // source ID
-    string binlogPos = 4; // binlog-pos (that's file:pos format)
-    repeated string sqls = 5; // sqls (use for replace)
+    string binlogPos = 3; // binlog-pos (that's file:pos format)
+    repeated string sqls = 4; // sqls (use for replace)
 } 

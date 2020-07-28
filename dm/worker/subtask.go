@@ -537,13 +537,21 @@ func (st *SubTask) OperateSchema(ctx context.Context, req *pb.OperateWorkerSchem
 }
 
 // HandleError handle error for syncer unit
-func (st *SubTask) HandleError(ctx context.Context, req *pb.HandleWorkerErrorRequest) (err error) {
+func (st *SubTask) HandleError(ctx context.Context, req *pb.HandleWorkerErrorRequest) (string, error) {
 	syncUnit, ok := st.currUnit.(*syncer.Syncer)
 	if !ok {
-		return terror.ErrWorkerOperSyncUnitOnly.Generate(st.currUnit.Type())
+		return "", terror.ErrWorkerOperSyncUnitOnly.Generate(st.currUnit.Type())
 	}
 
-	return syncUnit.HandleError(ctx, req)
+	msg, err := syncUnit.HandleError(ctx, req)
+	if err != nil {
+		return msg, err
+	}
+
+	if st.Stage() == pb.Stage_Paused {
+		err = st.Resume()
+	}
+	return msg, err
 }
 
 // UpdateFromConfig updates config for `From`

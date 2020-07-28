@@ -175,6 +175,8 @@ type Location struct {
 	Position gmysql.Position
 
 	GTIDSet gtid.Set
+
+	Suffix int
 }
 
 // NewLocation returns a new Location

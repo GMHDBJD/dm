@@ -97,7 +97,7 @@ func handleErrorFunc(cmd *cobra.Command, _ []string) {
 	cli := common.MasterClient()
 
 	resp, err := cli.HandleError(ctx, &pb.HandleErrorRequest{
-		Op:        pb.HandleOp_SkipError,
+		Op:        op,
 		Task:      taskName,
 		BinlogPos: binlogPos,
 		Sqls:      sqls,

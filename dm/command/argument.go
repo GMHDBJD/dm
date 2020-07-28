@@ -76,3 +76,13 @@ func VerifySQLOperateArgs(binlogPosStr, sqlPattern string, sharding bool) (*mysq
 
 	return pos, reg, nil
 }
+
+// VerifyBinlogPos verify binlog pos string
+func VerifyBinlogPos(pos string) (*mysql.Position, error) {
+	binlogPosStr := TrimQuoteMark(pos)
+	pos2, err := binlog.PositionFromStr(binlogPosStr)
+	if err != nil {
+		return nil, terror.ErrVerifySQLOperateArgs.Generatef("invalid --binlog-pos %s in handle-error operation: %s", binlogPosStr, terror.Message(err))
+	}
+	return &pos2, nil
+}

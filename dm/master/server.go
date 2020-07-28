@@ -2186,7 +2186,6 @@ func (s *Server) HandleError(ctx context.Context, req *pb.HandleErrorRequest) (*
 		HandleError: &pb.HandleWorkerErrorRequest{
 			Op:        req.Op,
 			Task:      req.Task,
-			Source:    "", // set below.
 			BinlogPos: req.BinlogPos,
 			Sqls:      req.Sqls,
 		},
@@ -2203,9 +2202,7 @@ func (s *Server) HandleError(ctx context.Context, req *pb.HandleErrorRequest) (*
 				workerRespCh <- errorCommonWorkerResponse(fmt.Sprintf("source %s relevant worker-client not found", source), source, "")
 				return
 			}
-			workerReq2 := workerReq
-			workerReq2.HandleError.Source = source
-			resp, err := worker.SendRequest(ctx, &workerReq2, s.cfg.RPCTimeout)
+			resp, err := worker.SendRequest(ctx, &workerReq, s.cfg.RPCTimeout)
 			workerResp := &pb.CommonWorkerResponse{}
 			if err != nil {
 				workerResp = errorCommonWorkerResponse(err.Error(), source, worker.BaseInfo().Name)
