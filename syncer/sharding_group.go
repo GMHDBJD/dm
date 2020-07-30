@@ -81,6 +81,7 @@ import (
 	"github.com/pingcap/dm/pkg/conn"
 	tcontext "github.com/pingcap/dm/pkg/context"
 	"github.com/pingcap/dm/pkg/cputil"
+	"github.com/pingcap/dm/pkg/log"
 	"github.com/pingcap/dm/pkg/terror"
 	shardmeta "github.com/pingcap/dm/syncer/sharding-meta"
 
@@ -580,8 +581,10 @@ func (k *ShardingGroupKeeper) lowestFirstLocationInGroups() *binlog.Location {
 	k.RLock()
 	defer k.RUnlock()
 	var lowest *binlog.Location
-	for _, group := range k.groups {
+	log.L().Info("in lowest first location in groups")
+	for n, group := range k.groups {
 		location := group.FirstLocationUnresolved()
+		log.L().Info("get location", zap.Stringer(n, location))
 		if location == nil {
 			continue
 		}
@@ -596,6 +599,7 @@ func (k *ShardingGroupKeeper) lowestFirstLocationInGroups() *binlog.Location {
 
 // AdjustGlobalLocation adjusts globalLocation with sharding groups' lowest first point
 func (k *ShardingGroupKeeper) AdjustGlobalLocation(globalLocation binlog.Location) binlog.Location {
+	log.L().Info("in adjust global location")
 	lowestFirstLocation := k.lowestFirstLocationInGroups()
 	if lowestFirstLocation != nil && binlog.CompareLocation(*lowestFirstLocation, globalLocation, k.cfg.EnableGTID) < 0 {
 		return lowestFirstLocation.Clone()

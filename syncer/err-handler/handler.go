@@ -98,12 +98,14 @@ func (h *HandlerHolder) Handle(tctx *tcontext.Context, location *binlog.Location
 	}
 
 	if location.Suffix == 0 {
-		location.Suffix = 1
+		if handler.op == pb.HandleOp_ReplaceError {
+			location.Replace = true
+		}
 		return true
 	}
 
-	if location.Suffix-1 == len(handler.events) {
-		location.Suffix = 0
+	if location.Suffix == len(handler.events) {
+		location.Replace = false
 	}
 
 	return false
@@ -121,11 +123,11 @@ func (h *HandlerHolder) GetEvent(location *binlog.Location) (*replication.Binlog
 		return nil, nil
 	}
 
-	if len(handler.events) < location.Suffix {
+	if len(handler.events) <= location.Suffix {
 		return nil, nil
 	}
 
-	e := handler.events[location.Suffix-1]
+	e := handler.events[location.Suffix]
 	location.Suffix++
 	return e, nil
 }

@@ -177,6 +177,8 @@ type Location struct {
 	GTIDSet gtid.Set
 
 	Suffix int
+
+	Replace bool
 }
 
 // NewLocation returns a new Location
@@ -188,7 +190,7 @@ func NewLocation(flavor string) Location {
 }
 
 func (l Location) String() string {
-	return fmt.Sprintf("position: %v, gtid-set: %s", l.Position, l.GTIDSetStr())
+	return fmt.Sprintf("position: %v, gtid-set: %s, suffix: %d, replace: %v", l.Position, l.GTIDSetStr(), l.Suffix, l.Replace)
 }
 
 // GTIDSetStr returns gtid set's string
@@ -221,6 +223,8 @@ func (l Location) CloneWithFlavor(flavor string) Location {
 			Pos:  l.Position.Pos,
 		},
 		GTIDSet: newGTIDSet,
+		Suffix:  l.Suffix,
+		Replace: l.Replace,
 	}
 }
 
@@ -239,7 +243,17 @@ func CompareLocation(location1, location2 Location, cmpGTID bool) int {
 		log.L().Warn("gtidSet can't be compared, will compare by position", zap.Stringer("location1", location1), zap.Stringer("location2", location2))
 	}
 
-	return ComparePosition(location1.Position, location2.Position)
+	rc := ComparePosition(location1.Position, location2.Position)
+	if rc != 0 {
+		return rc
+	}
+	if location1.Suffix > location2.Suffix {
+		return 1
+	} else if location1.Suffix < location1.Suffix {
+		return -1
+	} else {
+		return 0
+	}
 }
 
 // CompareGTID returns:

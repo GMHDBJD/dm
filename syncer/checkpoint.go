@@ -320,6 +320,7 @@ func (cp *RemoteCheckPoint) Clear(tctx *tcontext.Context) error {
 func (cp *RemoteCheckPoint) SaveTablePoint(sourceSchema, sourceTable string, point binlog.Location, ti *model.TableInfo) {
 	cp.Lock()
 	defer cp.Unlock()
+	log.L().Info("in save table point", zap.Stringer("location", point))
 	cp.saveTablePoint(sourceSchema, sourceTable, point.Clone(), ti)
 }
 
@@ -419,6 +420,8 @@ func (cp *RemoteCheckPoint) IsNewerTablePoint(sourceSchema, sourceTable string, 
 		return binlog.CompareLocation(location, oldLocation, cp.cfg.EnableGTID) >= 0
 	}
 
+	log.L().Info("old location", zap.Stringer("location", oldLocation))
+	log.L().Info("new location", zap.Stringer("location", location))
 	return binlog.CompareLocation(location, oldLocation, cp.cfg.EnableGTID) > 0
 }
 

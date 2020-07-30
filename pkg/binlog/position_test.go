@@ -580,10 +580,10 @@ func (t *testPositionSuite) TestCompareCompareLocation(c *C) {
 		gset2, err := gtid.ParserGTID(cs.flavor, cs.gset2)
 		c.Assert(err, IsNil)
 
-		cmpGTID := CompareLocation(Location{cs.pos1, gset1, 0}, Location{cs.pos2, gset2, 0}, true)
+		cmpGTID := CompareLocation(Location{cs.pos1, gset1, 0, false}, Location{cs.pos2, gset2, 0, false}, true)
 		c.Assert(cmpGTID, Equals, cs.cmpGTID)
 
-		cmpPos := CompareLocation(Location{cs.pos1, gset1, 0}, Location{cs.pos2, gset2, 0}, false)
+		cmpPos := CompareLocation(Location{cs.pos1, gset1, 0, false}, Location{cs.pos2, gset2, 0, false}, false)
 		c.Assert(cmpPos, Equals, cs.cmpPos)
 	}
 
