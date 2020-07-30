@@ -520,15 +520,15 @@ function DM_062() {
 }
 
 function DM_063_CASE() {
-    run_sql_source1 "alter table ${shardddl1}.${tb1} modify id mediumint;"
+    run_sql_source1 "alter table ${shardddl1}.${tb1} modify id float;"
     run_sql_source1 "insert into ${shardddl1}.${tb1} values(1);"
     run_sql_source2 "insert into ${shardddl1}.${tb1} values(2);"
     run_sql_source2 "insert into ${shardddl1}.${tb2} values(3);"
-    run_sql_source2 "alter table ${shardddl1}.${tb1} modify id bigint;"
+    run_sql_source2 "alter table ${shardddl1}.${tb1} modify id float;"
     run_sql_source1 "insert into ${shardddl1}.${tb1} values(4);"
     run_sql_source2 "insert into ${shardddl1}.${tb1} values(5);"
     run_sql_source2 "insert into ${shardddl1}.${tb2} values(6);"
-    run_sql_source2 "alter table ${shardddl1}.${tb2} modify id bigint;"
+    run_sql_source2 "alter table ${shardddl1}.${tb2} modify id float;"
     run_sql_source1 "insert into ${shardddl1}.${tb1} values(7);"
     run_sql_source2 "insert into ${shardddl1}.${tb1} values(8);"
     run_sql_source2 "insert into ${shardddl1}.${tb2} values(9);"
@@ -691,8 +691,8 @@ function DM_068() {
 function run() {
     init_cluster
     init_database
-    start=36
-    end=70
+    start=63
+    end=63
     except=(042 044 045 052 053 054 055 060 061 069 070)
     for i in $(seq -f "%03g" ${start} ${end}); do
         if [[ ${except[@]} =~ $i ]]; then

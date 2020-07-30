@@ -1880,8 +1880,8 @@ func (s *Syncer) handleQueryEvent(ev *replication.QueryEvent, ec eventContext) e
 	// for sharding DDL, the firstPos should be the `Pos` of the binlog, not the `End_log_pos`
 	// so when restarting before sharding DDLs synced, this binlog can be re-sync again to trigger the TrySync
 	suf := ec.currentLocation.Suffix
-	if suf > 1 {
-		suf = 0
+	if suf >= 1 {
+		suf--
 	}
 	rep := false
 	if ec.currentLocation.Suffix > 1 {
@@ -1896,6 +1896,7 @@ func (s *Syncer) handleQueryEvent(ev *replication.QueryEvent, ec eventContext) e
 		Suffix:  suf,
 		Replace: rep,
 	}
+	log.L().Info(fmt.Sprintf("suffix %d, replace %v", startLocation.Suffix, startLocation.Replace))
 
 	source, _ = GenTableID(ddlInfo.tableNames[0][0].Schema, ddlInfo.tableNames[0][0].Name)
 
