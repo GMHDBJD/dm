@@ -158,6 +158,7 @@ ErrConfigShardModeNotSupport,[code=20033:class=config:scope=internal:level=mediu
 ErrConfigMoreThanOne,[code=20034:class=config:scope=internal:level=high], "Message: found %d %s for %s which should <= 1"
 ErrConfigEtcdParse,[code=20035:class=config:scope=internal:level=high], "Message: incapable config of %s from etcd"
 ErrConfigMissingForBound,[code=20036:class=config:scope=internal:level=high], "Message: source bound %s doesn't have related source config in etcd"
+ErrConfigInvaildSkipErrorCodes,[code=20037:class=config:scope=internal:level=high], "Message: invalid skip error codes: %s, Workaround: Please check the `skip-errors` config in task configuration file, which can be set to `digital`/`DM-digital`, such as `[1111,DM-2222]`"
 ErrBinlogExtractPosition,[code=22001:class=binlog-op:scope=internal:level=high]
 ErrBinlogInvalidFilename,[code=22002:class=binlog-op:scope=internal:level=high], "Message: invalid binlog filename"
 ErrBinlogParsePosFromStr,[code=22003:class=binlog-op:scope=internal:level=high]

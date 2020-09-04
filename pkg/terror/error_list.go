@@ -211,6 +211,7 @@ const (
 	codeConfigMoreThanOne
 	codeConfigEtcdParse
 	codeConfigMissingForBound
+	codeConfigInvalidSkipErrors
 )
 
 // Binlog operation error code list
@@ -791,6 +792,7 @@ var (
 	ErrConfigMoreThanOne            = New(codeConfigMoreThanOne, ClassConfig, ScopeInternal, LevelHigh, "found %d %s for %s which should <= 1", "")
 	ErrConfigEtcdParse              = New(codeConfigEtcdParse, ClassConfig, ScopeInternal, LevelHigh, "incapable config of %s from etcd", "")
 	ErrConfigMissingForBound        = New(codeConfigMissingForBound, ClassConfig, ScopeInternal, LevelHigh, "source bound %s doesn't have related source config in etcd", "")
+	ErrConfigInvaildSkipErrorCodes  = New(codeConfigInvalidSkipErrors, ClassConfig, ScopeInternal, LevelHigh, "invalid skip error codes: %s", "Please check the `skip-errors` config in task configuration file, which can be set to `digital`/`DM-digital`, such as `[1111,DM-2222]`")
 
 	// Binlog operation error
 	ErrBinlogExtractPosition = New(codeBinlogExtractPosition, ClassBinlogOp, ScopeInternal, LevelHigh, "", "")

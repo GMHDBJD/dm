@@ -18,6 +18,7 @@ import (
 	"path"
 	"sort"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/pingcap/dm/pkg/terror"
 
 	. "github.com/pingcap/check"
@@ -78,6 +79,27 @@ mysql-instances:
     loader-config-name: "global"
     syncer-config-name: "global"
 `
+
+	var errorTaskConfig3 = `---
+name: test
+task-mode: all
+is-sharding: true
+meta-schema: "dm_meta"
+enable-heartbeat: true
+timezone: "Asia/Shanghai"
+ignore-checking-items: ["all"]
+skip-errors: ["1111","DM-2222","dm-3333",4444,DM-5555,"aaaa","DM-bbbb"]
+
+target-database:
+  host: "127.0.0.1"
+  port: 4000
+  user: "root"
+  password: ""
+
+mysql-instances:
+  - source-id: "mysql-replica-01"
+`
+
 	taskConfig := NewTaskConfig()
 	err := taskConfig.Decode(errorTaskConfig1)
 	// field server-id is not a member of TaskConfig
@@ -88,6 +110,11 @@ mysql-instances:
 	// field name duplicate
 	c.Check(err, NotNil)
 	c.Assert(err, ErrorMatches, "*line 3: field name already set in type config.TaskConfig.*")
+
+	err = taskConfig.Decode(errorTaskConfig3)
+	// invaild skip error code
+	c.Assert(terror.ErrConfigInvaildSkipErrorCodes.Equal(err), IsTrue)
+	c.Assert(err, ErrorMatches, ".*invalid skip error codes: [aaaa DM-bbbb].*")
 
 	filepath := path.Join(c.MkDir(), "test_invalid_task.yaml")
 	configContent := []byte(`---
@@ -135,6 +162,7 @@ enable-heartbeat: true
 heartbeat-update-interval: 1
 heartbeat-report-interval: 1
 timezone: "Asia/Shanghai"
+skip-errors: [1111,DM-2222,"dm-3333","2222"]
 
 target-database:
   host: "127.0.0.1"
@@ -202,6 +230,10 @@ syncers:
 	c.Assert(taskConfig.MySQLInstances[2].Mydumper.Threads, Equals, 44)
 	c.Assert(taskConfig.MySQLInstances[2].Loader.PoolSize, Equals, 55)
 	c.Assert(taskConfig.MySQLInstances[2].Syncer.WorkerCount, Equals, 66)
+	c.Assert(taskConfig.SkipErrorCodes, DeepEquals, SkipErrorCodes{
+		MySQLErrorCodes: map[int]struct{}{1111: {}, 2222: {}},
+		DMErrorCodes:    map[int]struct{}{2222: {}, 3333: {}},
+	})
 
 	configContent = []byte(`---
 name: test
@@ -589,4 +621,37 @@ func (t *testConfig) TestMetaVerify(c *C) {
 		BinLogGTID: "1-1-12,4-4-4",
 	}
 	c.Assert(m.Verify(), IsNil)
+}
+
+func (t *testConfig) TestSkipErrorsContains(c *C) {
+	skipErrorCodes := SkipErrorCodes{
+		MySQLErrorCodes: map[int]struct{}{1111: {}, 2222: {}},
+		DMErrorCodes:    map[int]struct{}{2222: {}, 3333: {}},
+	}
+
+	// test mysql error
+	err1 := &mysql.MySQLError{1111, ""}
+	c.Assert(skipErrorCodes.Contains(err1), IsTrue)
+	err2 := &mysql.MySQLError{2222, ""}
+	c.Assert(skipErrorCodes.Contains(err2), IsTrue)
+	err3 := &mysql.MySQLError{3333, ""}
+	c.Assert(skipErrorCodes.Contains(err3), IsFalse)
+
+	// test terror
+	terr1 := terror.New(1111, terror.ClassNotSet, terror.ScopeNotSet, terror.LevelLow, "", "")
+	c.Assert(skipErrorCodes.Contains(terr1), IsFalse)
+	terr2 := terror.New(2222, terror.ClassNotSet, terror.ScopeNotSet, terror.LevelLow, "", "")
+	c.Assert(skipErrorCodes.Contains(terr2), IsTrue)
+	terr3 := terror.New(3333, terror.ClassNotSet, terror.ScopeNotSet, terror.LevelLow, "", "")
+	c.Assert(skipErrorCodes.Contains(terr3), IsTrue)
+
+	// test rootCause
+	terr := terr1.Delegate(err1)
+	c.Assert(skipErrorCodes.Contains(terr), IsTrue)
+	terr = terr3.Delegate(err1)
+	c.Assert(skipErrorCodes.Contains(terr), IsTrue)
+	terr = terr3.Delegate(err3)
+	c.Assert(skipErrorCodes.Contains(terr), IsTrue)
+	terr = terr1.Delegate(err3)
+	c.Assert(skipErrorCodes.Contains(terr), IsFalse)
 }

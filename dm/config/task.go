@@ -18,14 +18,17 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pingcap/dm/pkg/binlog"
 	"github.com/pingcap/dm/pkg/log"
 	"github.com/pingcap/dm/pkg/terror"
+	"github.com/pingcap/errors"
 
 	"github.com/dustin/go-humanize"
+	"github.com/go-sql-driver/mysql"
 	bf "github.com/pingcap/tidb-tools/pkg/binlog-filter"
 	"github.com/pingcap/tidb-tools/pkg/column-mapping"
 	"github.com/pingcap/tidb-tools/pkg/filter"
@@ -44,6 +47,12 @@ const (
 const (
 	ShardPessimistic = "pessimistic"
 	ShardOptimistic  = "optimistic"
+)
+
+// SkipErrorCode
+const (
+	MySQLErrorCode = "MySQLErrorCode"
+	DMErrorCode    = "DMErrorCode"
 )
 
 // default config item values
@@ -269,6 +278,19 @@ func (m *SyncerConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// SkipErrorCodes contains mysql error codes and dm error codes
+type SkipErrorCodes struct {
+	MySQLErrorCodes map[int]struct{}
+	DMErrorCodes    map[int]struct{}
+}
+
+func defaultSkipErrorCodes() SkipErrorCodes {
+	return SkipErrorCodes{
+		MySQLErrorCodes: make(map[int]struct{}),
+		DMErrorCodes:    make(map[int]struct{}),
+	}
+}
+
 // TaskConfig is the configuration for Task
 type TaskConfig struct {
 	*flag.FlagSet `yaml:"-" toml:"-" json:"-"`
@@ -316,6 +338,9 @@ type TaskConfig struct {
 
 	// deprecated, replaced by `start-task --remove-meta`
 	RemoveMeta bool `yaml:"remove-meta"`
+
+	SkipErrors []string `yaml:"skip-errors" toml:"skip-errors" json:"skip-errors"`
+	SkipErrorCodes
 }
 
 // NewTaskConfig creates a TaskConfig
@@ -336,6 +361,7 @@ func NewTaskConfig() *TaskConfig {
 		Mydumpers:               make(map[string]*MydumperConfig),
 		Loaders:                 make(map[string]*LoaderConfig),
 		Syncers:                 make(map[string]*SyncerConfig),
+		SkipErrorCodes:          defaultSkipErrorCodes(),
 		CleanDumpFile:           true,
 	}
 	cfg.FlagSet = flag.NewFlagSet("task", flag.ContinueOnError)
@@ -548,6 +574,23 @@ func (c *TaskConfig) adjust() error {
 		log.L().Warn("`remove-meta` in task config is deprecated, please use `start-task ... --remove-meta` instead")
 	}
 
+	invalidErrCodes := make([]string, 0)
+	for _, errCode := range c.SkipErrors {
+		code, errType, err := getSkipErrorCode(errCode)
+		if err != nil {
+			invalidErrCodes = append(invalidErrCodes, errCode)
+			continue
+		}
+		if errType == MySQLErrorCode {
+			c.SkipErrorCodes.MySQLErrorCodes[code] = struct{}{}
+		} else {
+			c.SkipErrorCodes.DMErrorCodes[code] = struct{}{}
+		}
+	}
+	if len(invalidErrCodes) != 0 {
+		return terror.ErrConfigInvaildSkipErrorCodes.Generate(invalidErrCodes)
+	}
+
 	return nil
 }
 
@@ -603,6 +646,8 @@ func (c *TaskConfig) SubTaskConfigs(sources map[string]DBConfig) ([]*SubTaskConf
 
 		cfg.CleanDumpFile = c.CleanDumpFile
 
+		cfg.SkipErrorCodes = c.SkipErrorCodes
+
 		err := cfg.Adjust(true)
 		if err != nil {
 			return nil, terror.Annotatef(err, "source %s", inst.SourceID)
@@ -633,6 +678,7 @@ func (c *TaskConfig) FromSubTaskConfigs(stCfgs ...*SubTaskConfig) {
 	c.OnlineDDLScheme = stCfg0.OnlineDDLScheme
 	c.CleanDumpFile = stCfg0.CleanDumpFile
 	c.EnableANSIQuotes = stCfg0.EnableANSIQuotes
+	c.SkipErrorCodes = stCfg0.SkipErrorCodes
 	c.MySQLInstances = make([]*MySQLInstance, 0, len(stCfgs))
 	c.BAList = make(map[string]*filter.Rules)
 	c.Routes = make(map[string]*router.TableRule)
@@ -709,4 +755,35 @@ func checkDuplicateString(ruleNames []string) []string {
 		}
 	}
 	return dupeArray
+}
+
+func getSkipErrorCode(errCode string) (int, string, error) {
+	errType := MySQLErrorCode
+	if len(errCode) > 3 && strings.ToUpper(errCode[:3]) == "DM-" {
+		errCode = errCode[3:]
+		errType = DMErrorCode
+	}
+	code, err := strconv.Atoi(errCode)
+	return code, errType, err
+}
+
+// Contains check whether SkipErrorCodes contains the error
+func (skipErrorCodes *SkipErrorCodes) Contains(err error) bool {
+	if terr, ok := err.(*terror.Error); ok {
+		if _, ok := skipErrorCodes.DMErrorCodes[int(terr.Code())]; ok {
+			return true
+		} else if terr.Cause() != nil {
+			return skipErrorCodes.Contains(terr.Cause())
+		} else {
+			return false
+		}
+	}
+
+	err = errors.Cause(err)
+	if merr, ok := err.(*mysql.MySQLError); ok {
+		if _, ok := skipErrorCodes.MySQLErrorCodes[int(merr.Number)]; ok {
+			return true
+		}
+	}
+	return false
 }

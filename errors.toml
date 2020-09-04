@@ -958,6 +958,12 @@ description = ""
 workaround = ""
 tags = ["internal", "high"]
 
+[error.DM-config-20037]
+message = "invalid skip error codes: %s"
+description = ""
+workaround = "Please check the `skip-errors` config in task configuration file, which can be set to `digital`/`DM-digital`, such as `[1111,DM-2222]`"
+tags = ["internal", "high"]
+
 [error.DM-binlog-op-22001]
 message = ""
 description = ""
