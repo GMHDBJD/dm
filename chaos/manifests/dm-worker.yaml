@@ -70,6 +70,7 @@ spec:
       volumes:
         - name: varlog
           emptyDir: {}
+
   volumeClaimTemplates:
     - metadata:
         name: dm-worker
