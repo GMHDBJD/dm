@@ -21,10 +21,6 @@ jobs:
       working-directory: ${{ github.workspace }}/go/src/github.com/pingcap/dm
 
     steps:
-    - name: Update source list
-      run: |
-        sudo apt update
-
     - name: Set up Go 1.13
       uses: actions/setup-go@v2
       with:
