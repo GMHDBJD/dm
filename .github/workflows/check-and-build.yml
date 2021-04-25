@@ -74,8 +74,9 @@ jobs:
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
         run: |
+          add-apt-repository ppa:longsleep/golang-backports
           apt update -y
-          apt install -y make
+          apt install -y make golang-go
           make build nolint=true
 
   lint:
