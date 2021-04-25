@@ -51,10 +51,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runtime: [ aarch64 ]
+        runtime: [ linux-arm ]
         include:
-        - runtime: aarch64
-          arch: aarch64 
+        - runtime: linux-arm
+          arch: armv7
           distro: ubuntu20.04
     steps:
 
@@ -74,15 +74,9 @@ jobs:
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
         run: |
-          apt update -y && apt install -y make wget
-          wget https://golang.org/dl/go1.16.linux-amd64.tar.gz
-          tar xvf go1.16.linux-amd64.tar.gz
-          chown -R root:root ./go
-          mv go /usr/local
-          export GOPATH=$HOME/go
-          export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-          echo "hello world"
-          go version
+          apt update -y && apt install -y make software-properties-common
+          add-apt-repository ppa:longsleep/golang-backports
+          apt update -y && apt install -y make golang-go
           make build nolint=true
 
   lint:
