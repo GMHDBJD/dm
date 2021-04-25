@@ -69,7 +69,7 @@ jobs:
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
         run: |
-          apt update -y && apt install -y make gnupg
+          apt update -y && apt install -y make gnupg ca-certificates
           echo 'deb http://ppa.launchpad.net/longsleep/golang-backports/ubuntu focal main' > /etc/apt/sources.list
           apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E
           apt update -y && apt install -y golang-go
