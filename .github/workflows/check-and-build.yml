@@ -58,6 +58,14 @@ jobs:
           distro: ubuntu20.04
     steps:
 
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.13
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
     - name: build on ${{ matrix.arch }}
       uses: uraimo/run-on-arch-action@v2.0.5
       with:
