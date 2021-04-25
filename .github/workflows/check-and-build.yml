@@ -51,9 +51,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runtime: [ linux-arm ]
+        runtime: [ armv7 ]
         include:
-        - runtime: linux-arm
+        - runtime: armv7
           arch: armv7
           distro: ubuntu20.04
     steps:
@@ -74,10 +74,9 @@ jobs:
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
         run: |
-          apt update -y
-          apt install -y make software-properties-common
-          add-apt-repository ppa:longsleep/golang-backports
-          apt install -y make golang-go
+          apt update -y && apt install -y make software-properties-common
+          add-apt-repository -y ppa:longsleep/golang-backports
+          apt update -y && apt install -y golang-go
           make build nolint=true
 
   lint:
