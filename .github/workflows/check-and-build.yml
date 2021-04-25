@@ -47,7 +47,7 @@ jobs:
 
   arm_build:
     runs-on: ubuntu-18.04
-    name: Make Build
+    name: Build on arm
     strategy:
       fail-fast: false
       matrix:
@@ -65,10 +65,7 @@ jobs:
         distro: ${{ matrix.distro }}
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
-        run: |
-          apt update -y
-          apt install -y make
-          make build nolint=true
+        run: make build nolint=true
 
   lint:
     name: Lint
