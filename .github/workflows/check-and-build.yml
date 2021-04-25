@@ -75,7 +75,7 @@ jobs:
         githubToken: ${{ github.token }}
         run: |
           apt update -y && apt install -y make
-          wget https://golang.org/dl/go1.16.linux-amd64.tar.gz
+          curl -O https://golang.org/dl/go1.16.linux-amd64.tar.gz
           tar xvf go1.16.linux-amd64.tar.gz
           chown -R root:root ./go
           mv go /usr/local
