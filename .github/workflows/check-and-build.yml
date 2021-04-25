@@ -79,8 +79,8 @@ jobs:
           tar xvf go1.16.linux-amd64.tar.gz
           chown -R root:root ./go
           mv go /usr/local
-          export GOPATH=$HOME/work
           export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+          go version
           make build nolint=true
 
   lint:
