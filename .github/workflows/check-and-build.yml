@@ -76,8 +76,7 @@ jobs:
         run: |
           apt update -y && apt install -y make software-properties-common
           add-apt-repository ppa:longsleep/golang-backports
-          apt update -y && apt install -y make golang-go
-          make build nolint=true
+          echo /etc/apt/sources.list
 
   lint:
     name: Lint
