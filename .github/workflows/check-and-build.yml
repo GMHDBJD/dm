@@ -62,7 +62,10 @@ jobs:
         distro: ${{ matrix.distro }}
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
-        run: make build nolint=true
+        run: |
+          apt-get update -y
+          apt-get install -y make
+          make build nolint=true
 
     - name: Build
       if: matrix.arch == ''
