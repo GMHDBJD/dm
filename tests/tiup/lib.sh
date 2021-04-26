@@ -73,13 +73,17 @@ function exec_incremental_stage1() {
     echo "exec_incremental_stage1"
     # prepare incremental data
     exec_sql mysql1 3306 "INSERT INTO $DB1.$TBL1 (c1, c2) VALUES (101, '101');"
+    echo "before insert db1.tb2"
     exec_sql mysql1 3306 "INSERT INTO $DB1.$TBL2 (c1, c2) VALUES (102, '102');"
+    echo "after insert db1.tb2"
     exec_sql mysql2 3306 "INSERT INTO $DB2.$TBL2 (c1, c2) VALUES (111, '111');"
     exec_sql mysql2 3306 "INSERT INTO $DB2.$TBL3 (c1, c2) VALUES (112, '112');"
 
     # prepare optimistic incremental data
     exec_sql mysql1 3306 "INSERT INTO $DB3.$TBL1 (c1, c2) VALUES (101, '101');"
+    echo "before insert db3.tb2"
     exec_sql mysql1 3306 "INSERT INTO $DB3.$TBL2 (c1, c2) VALUES (102, '102');"
+    echo "after insert db3.tb2"
     exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL2 (c1, c2) VALUES (111, '111');"
     exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL3 (c1, c2) VALUES (112, '112');"
 
