@@ -55,8 +55,12 @@ function exec_full_stage() {
     exec_sql mysql1 3306 "CREATE DATABASE $DB3;"
     exec_sql mysql2 3306 "CREATE DATABASE $DB4;"
     exec_sql mysql1 3306 "CREATE TABLE $DB3.$TBL1 (c1 INT PRIMARY KEY, c2 TEXT);"
+    echo "before create db3.tb2"
     exec_sql mysql1 3306 "CREATE TABLE $DB3.$TBL2 (c1 INT PRIMARY KEY, c2 TEXT);"
+    echo "after create db3.tb2"
+    echo "before create db4.tb2"
     exec_sql mysql2 3306 "CREATE TABLE $DB4.$TBL2 (c1 INT PRIMARY KEY, c2 TEXT);"
+    echo "after create db4.tb2"
     exec_sql mysql2 3306 "CREATE TABLE $DB4.$TBL3 (c1 INT PRIMARY KEY, c2 TEXT);"
 
     exec_sql mysql1 3306 "INSERT INTO $DB3.$TBL1 (c1, c2) VALUES (1, '1');"
@@ -66,6 +70,7 @@ function exec_full_stage() {
 }
 
 function exec_incremental_stage1() {
+    echo "exec_incremental_stage1"
     # prepare incremental data
     exec_sql mysql1 3306 "INSERT INTO $DB1.$TBL1 (c1, c2) VALUES (101, '101');"
     exec_sql mysql1 3306 "INSERT INTO $DB1.$TBL2 (c1, c2) VALUES (102, '102');"
@@ -92,6 +97,7 @@ function exec_incremental_stage1() {
 }
 
 function exec_incremental_stage2() {
+    echo "exec_incremental_stage2"
     # prepare incremental data
     exec_sql mysql1 3306 "INSERT INTO $DB1.$TBL1 (c1, c2) VALUES (201, '201');"
     exec_sql mysql1 3306 "INSERT INTO $DB1.$TBL2 (c1, c2) VALUES (202, '202');"
