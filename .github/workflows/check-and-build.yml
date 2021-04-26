@@ -51,10 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runtime: [ aarch64 ]
-        include:
-        - runtime: aarch64
-          arch: aarch64
+        arch: [ aarch64, armv6 ]
     steps:
 
     - name: Check out code
