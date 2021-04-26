@@ -46,7 +46,7 @@ jobs:
       run: make build nolint=true
 
   arm_build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     name: Make Build
     strategy:
       fail-fast: false
@@ -55,7 +55,6 @@ jobs:
         include:
         - runtime: aarch64
           arch: aarch64
-          distro: ubuntu20.04
     steps:
 
     - name: Check out code
@@ -65,7 +64,7 @@ jobs:
       uses: uraimo/run-on-arch-action@v2.0.5
       with:
         arch: ${{ matrix.arch }}
-        distro: ${{ matrix.distro }}
+        distro: ubuntu20.04
         # Not required, but speeds up builds
         githubToken: ${{ github.token }}
         run: |
