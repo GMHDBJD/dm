@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ aarch64, armv6 ]
+        arch: [ aarch64, armv7 ]
     steps:
 
     - name: Check out code
