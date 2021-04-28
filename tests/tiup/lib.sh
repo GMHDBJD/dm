@@ -113,8 +113,8 @@ function exec_incremental_stage2() {
     # prepare optimistic incremental data
     exec_sql mysql1 3306 "INSERT INTO $DB3.$TBL1 (c1, c2, c3, c4) VALUES (203, '203', 203, 203);"
     exec_sql mysql1 3306 "INSERT INTO $DB3.$TBL2 (c1, c2, c3, c4) VALUES (204, '204', 204, 204);"
-    exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL2 (c1, c2, c3, c4) VALUES (213, '213', 213, 203);"
-    exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL3 (c1, c2, c3, c4) VALUES (214, '213', 213, 204);"
+    exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL2 (c1, c2, c3, c4) VALUES (213, '213', 213, 213);"
+    exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL3 (c1, c2, c3, c4) VALUES (214, '214', 214, 214);"
 }
 
 function patch_nightly_with_tiup_mirror() {
