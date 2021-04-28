@@ -71,7 +71,7 @@ services:
     image: csuzhangxc/dm-tiup-control:latest
     env_file: ./secret/control.env
     environment:
-      - IS_PULL_REQUEST=false
+      - ref='refs/heads/main'
     networks:
       dm-tiup:
         ipv4_address: 172.28.0.100
