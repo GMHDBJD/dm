@@ -131,6 +131,7 @@ function patch_nightly_with_tiup_mirror() {
     # publish nightly version
     # binary files have already been built and packaged.
     tiup mirror genkey
+    tiup mirror grant gmhdbjd --name gmhdbjd
     tiup mirror publish dm-master nightly /dm-master-nightly-linux-amd64.tar.gz dm-master/dm-master --arch amd64 --os linux --desc="dm-master component of Data Migration Platform"
     tiup mirror publish dm-worker nightly /dm-worker-nightly-linux-amd64.tar.gz dm-worker/dm-worker --arch amd64 --os linux --desc="dm-worker component of Data Migration Platform"
     tiup mirror publish dmctl nightly /dmctl-nightly-linux-amd64.tar.gz dmctl/dmctl --arch amd64 --os linux --desc="dmctl component of Data Migration Platform"
