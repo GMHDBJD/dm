@@ -27,6 +27,11 @@ function deploy_previous_v2() {
 function migrate_in_previous_v2() {
     exec_full_stage
 
+    # v2.0.0 doesn't support 
+    if [[ "$PRE_VER" == "v2.0.0" ]]; then
+        sed -i "enable-relay: true/enable-gtid: false/g" $CUR/conf/source2.yaml
+    fi
+
     tiup dmctl:$PRE_VER --master-addr=master1:8261 operate-source create $CUR/conf/source1.yaml
     tiup dmctl:$PRE_VER --master-addr=master1:8261 operate-source create $CUR/conf/source2.yaml
 
