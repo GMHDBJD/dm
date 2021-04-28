@@ -117,7 +117,7 @@ function exec_incremental_stage2() {
     exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL3 (c1, c2, c3, c4) VALUES (214, '213', 213, 204);"
 }
 
-func patch_nightly_with_tiup_mirror() {
+function patch_nightly_with_tiup_mirror() {
     # clone packages for upgrade.
     # FIXME: use nightly version of grafana and prometheus after https://github.com/pingcap/tiup/issues/1334 fixed.
     tiup mirror clone tidb-dm-nightly-linux-amd64 --os=linux --arch=amd64 \
