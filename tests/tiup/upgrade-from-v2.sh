@@ -39,6 +39,10 @@ function migrate_in_previous_v2() {
 }
 
 function upgrade_to_current_v2() {
+    echo $ref $CUR_VER
+    if [[ "$CUR_VER" == "nightly" && "$ref" == "refs/pull"* ]]; then
+        patch_nightly_with_tiup_mirror
+    fi
     tiup update dmctl:$CUR_VER
     tiup dm upgrade --yes $CLUSTER_NAME $CUR_VER
 }
@@ -57,7 +61,6 @@ function destroy_v2_by_tiup() {
 }
 
 function test() {
-    echo "get ref" $ref
     install_sync_diff
 
     deploy_previous_v2

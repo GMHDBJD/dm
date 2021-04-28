@@ -116,3 +116,24 @@ function exec_incremental_stage2() {
     exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL2 (c1, c2, c3, c4) VALUES (213, '213', 213, 203);"
     exec_sql mysql2 3306 "INSERT INTO $DB4.$TBL3 (c1, c2, c3, c4) VALUES (214, '213', 213, 204);"
 }
+
+func patch_nightly_with_tiup_mirror() {
+    # clone packages for upgrade.
+    # FIXME: use nightly version of grafana and prometheus after https://github.com/pingcap/tiup/issues/1334 fixed.
+    tiup mirror clone tidb-dm-nightly-linux-amd64 --os=linux --arch=amd64 \
+    --alertmanager=v0.17.0 --grafana=v5.0.1 --prometheus=v5.0.1 \
+    --tiup=v$(tiup --version|grep 'tiup'|awk -F ' ' '{print $1}') --dm=v$(tiup --version|grep 'tiup'|awk -F ' ' '{print $1}')    
+
+    # change tiup mirror
+    cd tidb-dm-nightly-linux-amd64
+    ./local_install.sh
+
+    # publish nightly version
+    # binary files have already been built and packaged.
+    tiup mirror grant gmhdbjd --name gmhdbjd
+    tiup mirror publish dm-master nightly ~/dm-master-nightly-linux-amd64.tar.gz dm-master/dm-master --arch amd64 --os linux --desc="dm-master component of Data Migration Platform"
+    tiup mirror publish dm-worker nightly ~/dm-worker-nightly-linux-amd64.tar.gz dm-worker/dm-worker --arch amd64 --os linux --desc="dm-worker component of Data Migration Platform"
+    tiup mirror publish dmctl nightly ~/dmctl-nightly-linux-amd64.tar.gz dmctl/dmctl --arch amd64 --os linux --desc="dmctl component of Data Migration Platform"
+
+    tiup list
+}
