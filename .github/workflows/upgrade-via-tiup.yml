@@ -115,7 +115,7 @@ jobs:
           cp -r ${{ env.working-directory }}/dm/dm-ansible/scripts dmctl/scripts
           tar -czvf dmctl-nightly-linux-amd64.tar.gz dmctl
 
-  - name: copy package files
+    - name: copy package files
       run: |
           cd ${{ github.workspace }}/package
           docker cp dm-master-nightly-linux-amd64.tar.gz control:/
