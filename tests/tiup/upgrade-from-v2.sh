@@ -35,6 +35,7 @@ function migrate_in_previous_v2() {
     exec_incremental_stage1
 
     check_sync_diff $WORK_DIR $CUR/conf/diff_config.toml
+    exit 1
 }
 
 function upgrade_to_current_v2() {
