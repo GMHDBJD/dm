@@ -124,10 +124,8 @@ function patch_nightly_with_tiup_mirror() {
     --alertmanager=v0.17.0 --grafana=v5.0.1 --prometheus=v5.0.1 \
     --tiup=v$(tiup --version|grep 'tiup'|awk -F ' ' '{print $1}') --dm=v$(tiup --version|grep 'tiup'|awk -F ' ' '{print $1}')    
 
-    cur_dir=$(pwd)
     # change tiup mirror
-    cd tidb-dm-nightly-linux-amd64
-    ./local_install.sh
+    tidb-dm-nightly-linux-amd64/local_install.sh
 
     # publish nightly version
     # binary files have already been built and packaged.
@@ -138,5 +136,4 @@ function patch_nightly_with_tiup_mirror() {
     tiup mirror publish dmctl nightly /tmp/dmctl-nightly-linux-amd64.tar.gz dmctl/dmctl --arch amd64 --os linux --desc="dmctl component of Data Migration Platform"
 
     tiup list
-    cd $cur_dir
 }
