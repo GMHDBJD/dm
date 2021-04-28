@@ -57,6 +57,7 @@ function destroy_v2_by_tiup() {
 }
 
 function test() {
+    echo $ref
     install_sync_diff
 
     deploy_previous_v2

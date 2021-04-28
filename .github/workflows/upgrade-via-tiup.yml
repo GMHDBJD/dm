@@ -84,7 +84,7 @@ jobs:
       working-directory: ${{ env.working-directory }}
       run: make build nolint=true
     
-    - name: package files
+    - name: Package files
       run: |
           mkdir ${{ github.workspace }}/package
           cd ${{ github.workspace }}/package
@@ -116,7 +116,7 @@ jobs:
           cd ${{ env.working-directory }}/tests/tiup/docker
           GOPATH=${GITHUB_WORKSPACE}/go docker-compose up -d
 
-    - name: copy package files
+    - name: Copy package files
       run: |
           cd ${{ github.workspace }}/package
           docker cp dm-master-nightly-linux-amd64.tar.gz control:/
