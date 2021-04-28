@@ -119,9 +119,9 @@ jobs:
     - name: Copy package files
       run: |
           cd ${{ github.workspace }}/package
-          docker cp dm-master-nightly-linux-amd64.tar.gz control:/
-          docker cp dm-worker-nightly-linux-amd64.tar.gz control:/
-          docker cp dmctl-nightly-linux-amd64.tar.gz control:/
+          docker cp dm-master-nightly-linux-amd64.tar.gz control:/tmp
+          docker cp dm-worker-nightly-linux-amd64.tar.gz control:/tmp
+          docker cp dmctl-nightly-linux-amd64.tar.gz control:/tmp
 
     # TODO: support more CUR_VER
     - name: Run test cases
