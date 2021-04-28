@@ -84,12 +84,6 @@ jobs:
       working-directory: ${{ env.working-directory }}
       run: make build nolint=true
     
-    - name: Setup containers
-      working-directory: ${{ env.working-directory }}
-      run: |
-          cd ${{ env.working-directory }}/tests/tiup/docker
-          GOPATH=${GITHUB_WORKSPACE}/go docker-compose up -d
-    
     - name: package files
       run: |
           mkdir ${{ github.workspace }}/package
@@ -116,6 +110,12 @@ jobs:
           cp -r ${{ env.working-directory }}/dm/dm-ansible/scripts dmctl/scripts
           tar -czvf dmctl-nightly-linux-amd64.tar.gz dmctl
 
+    - name: Setup containers
+      working-directory: ${{ env.working-directory }}
+      run: |
+          cd ${{ env.working-directory }}/tests/tiup/docker
+          GOPATH=${GITHUB_WORKSPACE}/go docker-compose up -d IS_PULL_REQUEST=${{ github.ref == 'refs/pull'* }}
+
     - name: copy package files
       run: |
           cd ${{ github.workspace }}/package
@@ -128,7 +128,7 @@ jobs:
       working-directory: ${{ env.working-directory }}
       run: |
         cd ${{ env.working-directory }}/tests/tiup/docker
-        docker-compose exec -T control bash -c "cd /go/src/github.com/pingcap/dm && ./tests/tiup/upgrade-from-v2.sh ${{ matrix.previous_v2 }} nightly"
+        docker-compose exec -T control bash -c "echo $IS_PULL_REQUEST && cd /go/src/github.com/pingcap/dm && ./tests/tiup/upgrade-from-v2.sh ${{ matrix.previous_v2 }} nightly"
 
     # send Slack notify if failed.
     # NOTE: With the exception of `GITHUB_TOKEN`, secrets are not passed to the runner when a workflow is triggered from a forked repository.
