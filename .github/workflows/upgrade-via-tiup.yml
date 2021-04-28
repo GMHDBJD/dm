@@ -81,6 +81,7 @@ jobs:
         path: go/src/github.com/pingcap/dm
 
     - name: Build
+      working-directory: ${{ env.working-directory }}
       run: make build nolint=true
     
     - name: Setup containers
