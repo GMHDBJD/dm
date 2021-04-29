@@ -55,8 +55,6 @@ function upgrade_to_current_v2() {
 function migrate_in_v2 {
     exec_incremental_stage2
 
-    sleep 10
-
     check_sync_diff $WORK_DIR $CUR/conf/diff_config.toml
     run_dmctl_with_retry "show-ddl-locks" "upgrade_via_tiup_optimistic" 0
 
