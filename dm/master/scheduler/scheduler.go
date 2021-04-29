@@ -1262,6 +1262,7 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 		for name := range sbm {
 			invalidSourceBounds = append(invalidSourceBounds, name)
 		}
+		log.L().Error(fmt.Sprintf("delete sources bound %v", invalidSourceBounds))
 		_, err = ha.DeleteSourceBound(cli, invalidSourceBounds...)
 		if err != nil {
 			return 0, err
@@ -1270,6 +1271,7 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 
 	// 6. put trigger source bounds info to etcd to order dm-workers to start source
 	if len(boundsToTrigger) > 0 {
+		log.L().Error(fmt.Sprintf("put sources bound %v", boundsToTrigger))
 		_, err = ha.PutSourceBound(cli, boundsToTrigger...)
 		if err != nil {
 			return 0, err
