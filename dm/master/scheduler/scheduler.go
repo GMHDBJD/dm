@@ -1278,6 +1278,10 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 		}
 	}
 
+	for source, bounds := range s.bounds {
+		log.L().Error(fmt.Sprintf("sources %v", source))
+		log.L().Error(fmt.Sprintf("bounds %v", bounds))
+	}
 	// 7. recover bounds/unbounds, all sources which not in bounds should be in unbounds.
 	for source := range s.sourceCfgs {
 		if _, ok := s.bounds[source]; !ok {
