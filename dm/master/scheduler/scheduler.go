@@ -1213,6 +1213,7 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 	// because no DM-master leader are doing the scheduler.
 	sbm, _, err := ha.GetSourceBound(cli, "")
 	log.L().Error(fmt.Sprintf("get all sources bound %v", sbm))
+	log.L().Error(fmt.Sprintf("all sources %v", s.sourceCfgs))
 	if err != nil {
 		return 0, err
 	}
@@ -1278,10 +1279,8 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 		}
 	}
 
-	for source, bounds := range s.bounds {
-		log.L().Error(fmt.Sprintf("sources %v", source))
-		log.L().Error(fmt.Sprintf("bounds %v", bounds))
-	}
+	log.L().Error(fmt.Sprintf("bound sources %v", s.bounds))
+	log.L().Error(fmt.Sprintf("all sources %v", s.sourceCfgs))
 	// 7. recover bounds/unbounds, all sources which not in bounds should be in unbounds.
 	for source := range s.sourceCfgs {
 		if _, ok := s.bounds[source]; !ok {
