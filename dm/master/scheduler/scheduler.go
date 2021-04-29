@@ -1133,6 +1133,7 @@ func (s *Scheduler) GetExpectSubTaskStage(task, source string) ha.Stage {
 func (s *Scheduler) recoverSources(cli *clientv3.Client) error {
 	// get all source configs.
 	cfgM, _, err := ha.GetSourceCfg(cli, "", 0)
+	log.L().Error("get all sources from etcd %v", cfgM)
 	if err != nil {
 		return err
 	}
