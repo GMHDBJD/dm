@@ -141,7 +141,7 @@ function patch_nightly_with_tiup_mirror() {
 function run_dmctl_with_retry() {
     dmctl_log="dmctl.log"
     for ((k=0; k<10; k++)); do
-        tiup dmctl --master-addr=master1:8261 $1 > $dmctl_log 2>&1
+        tiup dmctl:$CUR_VER --master-addr=master1:8261 $1 > $dmctl_log 2>&1
         all_matched=true
         for ((i=2; i<$#; i+=2)); do
             j=$((i+1))
