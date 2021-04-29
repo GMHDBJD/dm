@@ -1281,6 +1281,7 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 	// 7. recover bounds/unbounds, all sources which not in bounds should be in unbounds.
 	for source := range s.sourceCfgs {
 		if _, ok := s.bounds[source]; !ok {
+			log.L().Error(fmt.Sprintf("get unbound %v", source))
 			s.unbounds[source] = struct{}{}
 		}
 	}
