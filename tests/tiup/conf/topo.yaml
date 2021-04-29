@@ -6,10 +6,16 @@ global:
 
 master_servers:
   - host: 172.28.0.101
+    config:
+      log-level: "debug"
 
 worker_servers:
   - host: 172.28.0.111
+    config:
+      log-level: "debug"
   - host: 172.28.0.112
+    config:
+      log-level: "debug"
 
 monitoring_servers:
   - host: 172.28.0.121

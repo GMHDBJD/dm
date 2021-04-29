@@ -61,8 +61,8 @@ function migrate_in_v2 {
     tiup dmctl:$CUR_VER --master-addr=master1:8261 show-ddl-locks > ddl-locks.log
     cat ddl-locks.log
     if grep -Fq "upgrade_via_tiup_optimistic" "ddl-locks.log"; then
-	echo "ddl locks haven't been resolved."
-	exit 1
+        echo "ddl locks haven't been resolved."
+        exit 1
     fi
 
     tiup dmctl:$CUR_VER --master-addr=master1:8261 stop-task $TASK_NAME
