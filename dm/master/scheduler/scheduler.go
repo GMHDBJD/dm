@@ -16,6 +16,7 @@ package scheduler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -1211,10 +1212,12 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 	// it should no new bound relationship added between this call and the below `GetKeepAliveWorkers`,
 	// because no DM-master leader are doing the scheduler.
 	sbm, _, err := ha.GetSourceBound(cli, "")
+	log.L().Error(fmt.Sprintf("get all sources bound %v", sbm))
 	if err != nil {
 		return 0, err
 	}
 	lastSourceBoundM, _, err := ha.GetLastSourceBounds(cli)
+	log.L().Error(fmt.Sprintf("get all last bound %v", lastSourceBoundM))
 	if err != nil {
 		return 0, err
 	}
@@ -1222,6 +1225,7 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 
 	// 3. get all history offline status.
 	kam, rev, err := ha.GetKeepAliveWorkers(cli)
+	log.L().Error(fmt.Sprintf("get all keepalive worker %v", kam))
 	if err != nil {
 		return 0, err
 	}
@@ -1236,11 +1240,14 @@ func (s *Scheduler) recoverWorkersBounds(cli *clientv3.Client) (int64, error) {
 		}
 		// set the stage as Free if it's keep alive.
 		if _, ok := kam[name]; ok {
+			log.L().Error(fmt.Sprintf("worker to free %s", name))
 			w.ToFree()
 			// set the stage as Bound and record the bound relationship if exists.
 			if bound, ok := sbm[name]; ok {
 				boundsToTrigger = append(boundsToTrigger, bound)
 				err2 = s.updateStatusForBound(w, bound)
+				log.L().Error(fmt.Sprintf("update worker bound %s", name))
+				log.L().Error(fmt.Sprintf("bound %v", bound))
 				if err2 != nil {
 					return 0, err2
 				}

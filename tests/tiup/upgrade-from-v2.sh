@@ -56,6 +56,8 @@ function migrate_in_v2 {
     exec_incremental_stage2
 
     check_sync_diff $WORK_DIR $CUR/conf/diff_config.toml
+
+    sleep 10
     check_sync_diff $WORK_DIR $CUR/conf/diff_config_optimistic.toml
 
     tiup dmctl:$CUR_VER --master-addr=master1:8261 show-ddl-locks > ddl-locks.log
